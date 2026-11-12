@@ -283,9 +283,12 @@ namespace esphome
             }
             else 
             {
-                if ((actual_flow_temp - calculated_flow) >= MAX_FEED_STEP_CHANGE)
+                // Heating keeps a tighter margin: within 0.5 °C of the feed the FTC slows
+                // the compressor down instead of stopping it. 0.05 absorbs float noise on
+                // the 0.1 °C grid.
+                if ((actual_flow_temp - calculated_flow) > HEATING_FEED_STEP_ADJUSTMENT + 0.05f)
                 {
-                    float adjusted_target = actual_flow_temp - MAX_FEED_STEP_ADJUSTMENT;
+                    float adjusted_target = actual_flow_temp - HEATING_FEED_STEP_ADJUSTMENT;
                     
                     ESP_LOGW(OPTIMIZER_TAG, "Heating/DHW flow adjust: %.2f°C to prevent compressor stop! (setpoint: %.2f°C is %.2f°C below actual feed temp)",
                             adjusted_target, calculated_flow, (actual_flow_temp - calculated_flow));

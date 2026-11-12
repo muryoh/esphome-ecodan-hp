@@ -66,6 +66,8 @@ namespace esphome
 
       const float MAX_FEED_STEP_CHANGE = 1.0f;
       const float MAX_FEED_STEP_ADJUSTMENT = 1.0f;
+      // Heating only: the FTC slows down at feed - 0.5 but may stop at feed - 1.
+      const float HEATING_FEED_STEP_ADJUSTMENT = 0.5f;
 
       uint32_t compressor_start_time_ = 0;
       uint32_t last_defrost_time_     = 0;
