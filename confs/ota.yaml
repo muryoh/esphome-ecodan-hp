@@ -28,6 +28,6 @@ ota:
 update:
   - platform: http_request
     name: Firmware Update
-    source: https://github.com/gekkekoe/esphome-ecodan-hp/releases/latest/download/manifest.json
+    source: https://github.com/muryoh/esphome-ecodan-hp/releases/latest/download/manifest.json
 
 improv_serial:
