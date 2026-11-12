@@ -367,10 +367,13 @@ namespace esphome
                 calculated = this->round_nearest(calculated);
 
                 auto limits = this->get_flow_limits(zone);
-                calculated = this->enforce_step_limit(status, bus_feed, calculated, false);
                 // only skip clamp during post dhw window
                 if (!this->is_post_dhw_window(status))
                     calculated = this->clamp_flow_temp(calculated, limits.min, limits.max);
+                // Step limit last, so a max below the feed slows a running compressor
+                // down instead of stopping it.
+                if (this->is_compressor_active(status))
+                    calculated = this->enforce_step_limit(status, bus_feed, calculated, false);
             }
 
             return calculated;
