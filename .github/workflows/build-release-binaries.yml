@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: 
-        lang: [ "en", "nl", "es", "fr", "it", "de", "fi", "sv", "no", "pl", "da", "sk", "sl"]
-        board: [asgard, esp32s3, esp32s3-proxy2]
-        zone: [z1, z2]
+        lang: [ "en" ]
+        board: [ asgard ]
+        zone: [ z1 ]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4.2.2
