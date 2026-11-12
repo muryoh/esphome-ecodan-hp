@@ -29,11 +29,15 @@ namespace esphome
     }
 
     // Room-driven cap on the heating flow, moved once per auto-adaptive cycle
-    // (5 min): down while the room is above target + ROOM_CAP_ABOVE_TARGET, up
-    // while it is below target - ROOM_CAP_BELOW_TARGET, held in between.
+    // (5 min): down by ROOM_CAP_STEP while the room is above target +
+    // ROOM_CAP_ABOVE_TARGET, down by ROOM_CAP_SEARCH_STEP while it is at or
+    // just above target, up while it is below target - ROOM_CAP_BELOW_TARGET,
+    // held in between. The slow search down finds the lowest flow that still
+    // holds the target instead of sitting on whatever cap the last rise left.
     // Auto-adaptive itself never aims below return + base delta-T, so without
     // this cap the flow only ratchets up.
     constexpr float ROOM_CAP_STEP = 0.2f;
+    constexpr float ROOM_CAP_SEARCH_STEP = 0.1f;
     constexpr float ROOM_CAP_ABOVE_TARGET = 0.2f;
     constexpr float ROOM_CAP_BELOW_TARGET = 0.1f;
 
@@ -49,6 +53,8 @@ namespace esphome
       {
         if (room > target + ROOM_CAP_ABOVE_TARGET)
           cap -= ROOM_CAP_STEP;
+        else if (room >= target - 0.05f) // at target, with sensor float noise
+          cap -= ROOM_CAP_SEARCH_STEP;
         else if (room < target - ROOM_CAP_BELOW_TARGET)
           cap += ROOM_CAP_STEP;
       }

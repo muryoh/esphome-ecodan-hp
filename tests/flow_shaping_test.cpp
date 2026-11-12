@@ -20,12 +20,17 @@ int main()
   // Missing feed leaves the target alone.
   assert(near(live_heating_flow(24.0f, NAN), 24.0f));
   // Room cap starts at the max, then follows the room.
-  assert(near(next_room_cap(NAN, NAN, 19.0f, 19.0f, 20.0f, 35.0f), 35.0f));
+  assert(near(next_room_cap(NAN, NAN, 19.0f, 19.0f, 20.0f, 35.0f), 34.9f));
   assert(near(next_room_cap(28.0f, NAN, 19.4f, 19.0f, 20.0f, 35.0f), 27.8f));
   assert(near(next_room_cap(28.0f, NAN, 18.8f, 19.0f, 20.0f, 35.0f), 28.2f));
-  assert(near(next_room_cap(28.0f, NAN, 19.1f, 19.0f, 20.0f, 35.0f), 28.0f));
+  // At target: slow search down. Just below target: hold.
+  assert(near(next_room_cap(28.0f, NAN, 19.1f, 19.0f, 20.0f, 35.0f), 27.9f));
+  assert(near(next_room_cap(28.0f, NAN, 19.2f, 19.0f, 20.0f, 35.0f), 27.9f));
+  assert(near(next_room_cap(28.0f, NAN, 18.95f, 19.0f, 20.0f, 35.0f), 27.9f));
+  assert(near(next_room_cap(28.0f, NAN, 18.9f, 19.0f, 20.0f, 35.0f), 28.0f));
   // A new cap starts from the setpoint in use, not from the max.
-  assert(near(next_room_cap(NAN, 26.0f, 19.0f, 19.0f, 20.0f, 29.0f), 26.0f));
+  assert(near(next_room_cap(NAN, 26.0f, 18.95f, 19.0f, 20.0f, 29.0f), 25.9f));
+  assert(near(next_room_cap(NAN, 26.0f, 18.9f, 19.0f, 20.0f, 29.0f), 26.0f));
   assert(near(next_room_cap(NAN, 26.0f, 18.5f, 19.0f, 20.0f, 29.0f), 26.2f));
   // No wind-down below the running floor, never above the max.
   assert(near(next_room_cap(26.0f, NAN, 19.5f, 19.0f, 26.5f, 35.0f), 26.5f));
