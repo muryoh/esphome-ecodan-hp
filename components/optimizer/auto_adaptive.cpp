@@ -272,8 +272,10 @@ namespace esphome
                     zone_min, zone_max, error_factor, smart_boost);
 
                 float bus_feed = this->get_bus_feed_temp((i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2);
+                // Only trail downwards: with a buffer the zone feed after DHW is often
+                // below the target, and trailing there would cut the demand.
                 if (this->is_post_dhw_window(status) && !isnan(bus_feed) &&
-                    std::fabs(bus_feed - out_flow_heat) >= MAX_FEED_STEP_CHANGE)
+                    (bus_feed - out_flow_heat) >= MAX_FEED_STEP_CHANGE)
                 {
                     // enforce_step_limit does invese of what we need, so custom stepper here
                     float trailed = this->round_nearest(bus_feed - 0.5f);

@@ -101,8 +101,8 @@ namespace esphome
                 else if (status.is_heating_active())
                 {
                     // Trail only the DHW -> heating handover
-                    if (fabs(actual_flow_temp - current_flow_setpoint) < 1.0f)
-                        return;   // no stop risk: leave the setpoint alone
+                    if ((actual_flow_temp - current_flow_setpoint) < 1.0f)
+                        return;   // no stop risk (setpoint not 1 °C below the feed): leave it alone
 
                     float adjusted_target = actual_flow_temp - 0.5f;
 
