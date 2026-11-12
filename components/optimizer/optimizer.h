@@ -32,6 +32,8 @@ namespace esphome
       // Last live guard command per zone, to skip resends until the FTC echoes it.
       float guard_last_flow_[2] = {NAN, NAN};
       uint32_t guard_last_ms_[2] = {0, 0};
+      // Room-driven heating flow cap per zone (see next_room_cap).
+      float room_cap_[2] = {NAN, NAN};
 
       // Short-cycle lockout strategy state
       int   active_lockout_strategy_      = 0;

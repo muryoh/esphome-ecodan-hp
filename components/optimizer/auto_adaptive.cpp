@@ -272,6 +272,25 @@ namespace esphome
                     zone_min, zone_max, error_factor, smart_boost);
 
                 float bus_feed = this->get_bus_feed_temp((i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2);
+
+                // The cap only moves while the compressor runs. A stop resets it, so a
+                // warm night cannot leave it wound down for a cold morning restart (the
+                // live guard already keeps that restart gentle).
+                if (this->is_compressor_active(status))
+                {
+                    float cap_floor = isnan(bus_feed) ? zone_min : std::max(zone_min, bus_feed - FLOW_FLOOR_BELOW_FEED);
+                    this->room_cap_[i] = next_room_cap(this->room_cap_[i], room_temp, room_target_temp, cap_floor, zone_max);
+                }
+                else
+                {
+                    this->room_cap_[i] = NAN;
+                }
+                if (!isnan(this->room_cap_[i]) && out_flow_heat > this->room_cap_[i])
+                {
+                    ESP_LOGD(OPTIMIZER_TAG, "Z%d Room cap: flow %.2f°C -> %.2f°C (room %.1f, target %.1f)",
+                        (i + 1), out_flow_heat, this->room_cap_[i], room_temp, room_target_temp);
+                    out_flow_heat = this->round_nearest(this->room_cap_[i]);
+                }
                 // Only trail downwards: with a buffer the zone feed after DHW is often
                 // below the target, and trailing there would cut the demand.
                 if (this->is_post_dhw_window(status) && !isnan(bus_feed) &&

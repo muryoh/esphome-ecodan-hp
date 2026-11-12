@@ -27,5 +27,30 @@ namespace esphome
       flow = std::max(flow, feed - FLOW_FLOOR_BELOW_FEED);
       return std::round(flow * 10.0f) / 10.0f;
     }
+
+    // Room-driven cap on the heating flow, moved once per auto-adaptive cycle
+    // (5 min): down while the room is above target + ROOM_CAP_ABOVE_TARGET, up
+    // while it is below target - ROOM_CAP_BELOW_TARGET, held in between.
+    // Auto-adaptive itself never aims below return + base delta-T, so without
+    // this cap the flow only ratchets up.
+    constexpr float ROOM_CAP_STEP = 0.2f;
+    constexpr float ROOM_CAP_ABOVE_TARGET = 0.2f;
+    constexpr float ROOM_CAP_BELOW_TARGET = 0.1f;
+
+    // lo should include feed - FLOW_FLOOR_BELOW_FEED while the compressor runs,
+    // so the cap does not wind down below what can actually be applied.
+    inline float next_room_cap(float cap, float room, float target, float lo, float hi)
+    {
+      if (std::isnan(cap))
+        cap = hi;
+      if (!std::isnan(room) && !std::isnan(target))
+      {
+        if (room > target + ROOM_CAP_ABOVE_TARGET)
+          cap -= ROOM_CAP_STEP;
+        else if (room < target - ROOM_CAP_BELOW_TARGET)
+          cap += ROOM_CAP_STEP;
+      }
+      return std::clamp(cap, std::min(lo, hi), hi);
+    }
   } // namespace optimizer
 } // namespace esphome
