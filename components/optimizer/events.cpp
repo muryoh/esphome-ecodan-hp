@@ -100,16 +100,10 @@ namespace esphome
                 }
                 else if (status.is_heating_active())
                 {
-                    // Trail only the DHW -> heating handover
-                    if ((actual_flow_temp - current_flow_setpoint) < 1.0f)
-                        return;   // no stop risk (setpoint not 1 °C below the feed): leave it alone
-
-                    float adjusted_target = actual_flow_temp - 0.5f;
-
-                    ESP_LOGW(OPTIMIZER_TAG, "Heating/DHW flow adjust: %.2f°C to prevent compressor stop! (setpoint: %.2f°C is %.2f°C below actual feed temp)",
-                            adjusted_target, current_flow_setpoint, (actual_flow_temp - current_flow_setpoint));
-
-                    adjusted_flow = adjusted_target;
+                    // The auto-adaptive live guard (prevention.cpp) already keeps the
+                    // handover between feed - 0.5 and feed + 1; trailing here as well
+                    // would undo its raises on every feed change.
+                    return;
                 }
                 else
                 {

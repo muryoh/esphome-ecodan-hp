@@ -99,7 +99,21 @@ namespace esphome
                 return;
             }
 
-            if (!this->predictive_cycle_enabled() && !this->aa_enabled())
+            if (this->aa_enabled())
+            {
+                // Auto-adaptive owns the setpoint: no remembered boost base, the live
+                // guard keeps a running compressor between feed - 0.5 and feed + 1.
+                this->clear_predictive_boost_(OptimizerZone::ZONE_1, false);
+                this->clear_predictive_boost_(OptimizerZone::ZONE_2, false);
+                this->aa_live_flow_guard_(status, OptimizerZone::ZONE_1);
+                // Without independent zone temps both zones share one setpoint: Z1 covers it.
+                if (status.has_2zones() && status.has_independent_zone_temps())
+                    this->aa_live_flow_guard_(status, OptimizerZone::ZONE_2);
+                this->update_boost_sensor();
+                return;
+            }
+
+            if (!this->predictive_cycle_enabled())
             {
                 // Feature turned off — undo any boost we still have applied.
                 this->clear_predictive_boost_(OptimizerZone::ZONE_1, true);
@@ -130,6 +144,61 @@ namespace esphome
             }
 
             this->update_boost_sensor();
+        }
+
+        float Optimizer::aa_running_heating_flow_(const ecodan::Status &status, OptimizerZone zone, float target)
+        {
+            if (!this->is_compressor_active(status))
+                return target;
+            return live_heating_flow(target, this->get_bus_feed_temp(zone));
+        }
+
+        void Optimizer::aa_live_flow_guard_(const ecodan::Status &status, OptimizerZone zone)
+        {
+            if (this->is_system_hands_off(status) || !this->is_compressor_active(status) ||
+                this->odin_owns_flow_setpoint() || this->vt_is_off_(zone))
+                return;
+
+            const auto ez = (zone == OptimizerZone::ZONE_2) ? esphome::ecodan::Zone::ZONE_2 : esphome::ecodan::Zone::ZONE_1;
+            const int zi = (zone == OptimizerZone::ZONE_2) ? 1 : 0;
+            float live_setpoint = this->get_flow_setpoint(zone);
+            float bus_feed = this->get_bus_feed_temp(zone);
+            if (isnan(live_setpoint) || isnan(bus_feed))
+                return;
+
+            float flow;
+            if (status.is_cooling_active(ez))
+            {
+                flow = this->enforce_step_limit(status, bus_feed, live_setpoint, true);
+            }
+            // Single zone: hold the band through mode transitions too (operation not
+            // yet HEAT_ON while the compressor runs). Two zones: only the active one.
+            else if (status.is_auto_adaptive_heating(ez) && (!status.has_2zones() || status.is_heating_active(ez)))
+            {
+                // A shared setpoint follows the higher target, like the AA write path.
+                float target = status.has_independent_zone_temps()
+                    ? this->aa_heat_target_[zi]
+                    : fmax(this->aa_heat_target_[0], this->aa_heat_target_[1]);
+                flow = this->aa_running_heating_flow_(status, zone, isnan(target) ? live_setpoint : target);
+            }
+            else
+            {
+                return;
+            }
+
+            // The status setpoint only changes once the FTC echoes it: do not resend
+            // the same command on every feed change while that echo is pending.
+            const uint32_t now = millis();
+            if (std::fabs(flow - this->guard_last_flow_[zi]) < 0.05f && (now - this->guard_last_ms_[zi]) < 60000UL)
+                return;
+
+            if (this->set_flow_temp(flow, zone))
+            {
+                this->guard_last_flow_[zi] = flow;
+                this->guard_last_ms_[zi] = now;
+                ESP_LOGD(OPTIMIZER_CYCLE_TAG, "Z%d live guard: setpoint %.1f°C -> %.1f°C (FTC feed %.1f°C)",
+                    static_cast<uint8_t>(zone), live_setpoint, flow, bus_feed);
+            }
         }
 
         bool Optimizer::get_predictive_boost_state()

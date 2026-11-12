@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include "optimizer_state.h"
+#include "flow_shaping.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include <lwip/netdb.h>
@@ -24,6 +25,13 @@ namespace esphome
 
       float predictive_boost_base_z1_setpoint_ = NAN;
       float predictive_boost_base_z2_setpoint_ = NAN;
+
+      // Last heating flow computed by the auto-adaptive loop, per zone. The live
+      // guard keeps the running setpoint near the feed while moving towards it.
+      float aa_heat_target_[2] = {NAN, NAN};
+      // Last live guard command per zone, to skip resends until the FTC echoes it.
+      float guard_last_flow_[2] = {NAN, NAN};
+      uint32_t guard_last_ms_[2] = {0, 0};
 
       // Short-cycle lockout strategy state
       int   active_lockout_strategy_      = 0;
@@ -128,6 +136,8 @@ namespace esphome
       void predictive_short_cycle_check_for_zone_(const ecodan::Status &status, OptimizerZone zone, bool is_cooling);
       void clear_predictive_boost_(OptimizerZone zone, bool restore);
       void apply_flow_lockout_setpoint_(const ecodan::Status &status, OptimizerZone zone, float actual_flow_temp, bool initial);
+      void aa_live_flow_guard_(const ecodan::Status &status, OptimizerZone zone);
+      float aa_running_heating_flow_(const ecodan::Status &status, OptimizerZone zone, float target);
 
       // ── utility.cpp ───────────────────────────────────────────────────
       bool  is_system_hands_off(const ecodan::Status &status);

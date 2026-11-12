@@ -284,6 +284,10 @@ namespace esphome
                         (i + 1), trailed, out_flow_heat);
                     out_flow_heat = trailed;
                 }
+
+                this->aa_heat_target_[i] = out_flow_heat;
+                out_flow_heat = this->aa_running_heating_flow_(
+                    status, (i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2, out_flow_heat);
             } else if (is_cooling_mode && is_cooling_active) {
                 out_flow_cool = this->calculate_cooling_flow_(i, status, target_delta);
             }
