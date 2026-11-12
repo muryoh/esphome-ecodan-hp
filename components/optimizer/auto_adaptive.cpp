@@ -274,18 +274,21 @@ namespace esphome
                 float bus_feed = this->get_bus_feed_temp((i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2);
 
                 // The cap only moves while the compressor runs. A stop resets it, so a
-                // warm night cannot leave it wound down for a cold morning restart (the
-                // live guard already keeps that restart gentle).
+                // warm night cannot leave it wound down for a cold morning restart; the
+                // next run starts it from the setpoint then in use. While stopped, the
+                // flow is still held under the weather ceiling.
+                // Never below the zone min, even when the weather curve is.
+                float cap_ceiling = std::max(zone_min, std::min(zone_max, weather_flow_ceiling(actual_outside_temp)));
                 if (this->is_compressor_active(status))
                 {
                     float cap_floor = isnan(bus_feed) ? zone_min : std::max(zone_min, bus_feed - FLOW_FLOOR_BELOW_FEED);
-                    // Never below the zone min, even when the weather curve is.
-                    float cap_ceiling = std::max(zone_min, std::min(zone_max, weather_flow_ceiling(actual_outside_temp)));
-                    this->room_cap_[i] = next_room_cap(this->room_cap_[i], room_temp, room_target_temp, cap_floor, cap_ceiling);
+                    float cap_start = this->get_flow_setpoint((i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2);
+                    this->room_cap_[i] = next_room_cap(this->room_cap_[i], cap_start, room_temp, room_target_temp, cap_floor, cap_ceiling);
                 }
                 else
                 {
                     this->room_cap_[i] = NAN;
+                    out_flow_heat = std::min(out_flow_heat, cap_ceiling);
                 }
                 if (!isnan(this->room_cap_[i]) && out_flow_heat > this->room_cap_[i])
                 {

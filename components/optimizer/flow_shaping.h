@@ -39,10 +39,12 @@ namespace esphome
 
     // lo should include feed - FLOW_FLOOR_BELOW_FEED while the compressor runs,
     // so the cap does not wind down below what can actually be applied.
-    inline float next_room_cap(float cap, float room, float target, float lo, float hi)
+    // A cap that is not set yet (boot, new run) starts from `start`, the flow
+    // setpoint in use, so a run never begins with a free climb to hi.
+    inline float next_room_cap(float cap, float start, float room, float target, float lo, float hi)
     {
       if (std::isnan(cap))
-        cap = hi;
+        cap = std::isnan(start) ? hi : start;
       if (!std::isnan(room) && !std::isnan(target))
       {
         if (room > target + ROOM_CAP_ABOVE_TARGET)
