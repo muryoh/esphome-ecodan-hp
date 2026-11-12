@@ -47,15 +47,20 @@ api:
 #  #svc: !include confs/server-control-z1.yaml
 #  adaptive: !include confs/auto-adaptive.yaml
 
+# Fork: components and confs come from this fork. The release workflow pins
+# both refs to the release tag, so a build uses exactly the tagged code.
 external_components:
-  - source: github://gekkekoe/esphome-ecodan-hp@main
+  - source:
+      type: git
+      url: https://github.com/muryoh/esphome-ecodan-hp
+      ref: custom/2026-11-11.03
     components: [ ecodan, optimizer ]
     refresh: always
 
 packages:
   remote_package:
-    url: https://github.com/gekkekoe/esphome-ecodan-hp/
-    ref: main
+    url: https://github.com/muryoh/esphome-ecodan-hp/
+    ref: custom/2026-11-11.03
     refresh: always
     files: [ 
             confs/base.yaml,            # required

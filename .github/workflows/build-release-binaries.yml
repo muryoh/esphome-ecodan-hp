@@ -38,6 +38,7 @@ jobs:
           sed "s/esp32s3.yaml,/${{ matrix.board }}.yaml,/g; \
               s/ecodan-labels-en.yaml,/ecodan-labels-${{ matrix.lang }}.yaml,/g; \
               s/confs\\/wifi.yaml/confs\/wifi-ota.yaml/g" ecodan-esphome.yaml > build.yaml
+          sed -i "s#^\(\s*ref:\).*#\1 ${{ github.event.release.tag_name }}#" build.yaml
           sed "s/manifest/$MANIFEST/g; s/FIRMWARE_VERSION/$PREFIX/g" confs/ota.yaml > ota.yaml
           echo "<<: !include ota.yaml" >> build.yaml
 
