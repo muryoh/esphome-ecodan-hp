@@ -52,5 +52,21 @@ namespace esphome
       }
       return std::clamp(cap, std::min(lo, hi), hi);
     }
+
+    // Weather ceiling for the room cap: 29 °C at +10 °C outside and above,
+    // 34 °C at 0 °C, 38 °C at -7 °C and below, linear in between. A gentle
+    // radiator curve that still rises by itself in cold weather.
+    inline float weather_flow_ceiling(float outside)
+    {
+      if (std::isnan(outside))
+        return 38.0f;
+      if (outside >= 10.0f)
+        return 29.0f;
+      if (outside >= 0.0f)
+        return 34.0f - 0.5f * outside;
+      if (outside >= -7.0f)
+        return 34.0f - 4.0f / 7.0f * outside;
+      return 38.0f;
+    }
   } // namespace optimizer
 } // namespace esphome

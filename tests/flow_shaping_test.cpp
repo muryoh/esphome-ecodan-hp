@@ -29,6 +29,12 @@ int main()
   assert(near(next_room_cap(35.0f, 18.0f, 19.0f, 20.0f, 35.0f), 35.0f));
   // Floor above the max: the max wins (the live guard handles the feed).
   assert(near(next_room_cap(30.0f, 19.0f, 19.0f, 31.0f, 29.0f), 29.0f));
+  // Weather ceiling.
+  assert(near(weather_flow_ceiling(12.0f), 29.0f));
+  assert(near(weather_flow_ceiling(5.0f), 31.5f));
+  assert(near(weather_flow_ceiling(0.0f), 34.0f));
+  assert(near(weather_flow_ceiling(-7.0f), 38.0f));
+  assert(near(weather_flow_ceiling(-15.0f), 38.0f));
   std::puts("flow_shaping_test: OK");
   return 0;
 }

@@ -279,7 +279,9 @@ namespace esphome
                 if (this->is_compressor_active(status))
                 {
                     float cap_floor = isnan(bus_feed) ? zone_min : std::max(zone_min, bus_feed - FLOW_FLOOR_BELOW_FEED);
-                    this->room_cap_[i] = next_room_cap(this->room_cap_[i], room_temp, room_target_temp, cap_floor, zone_max);
+                    // Never below the zone min, even when the weather curve is.
+                    float cap_ceiling = std::max(zone_min, std::min(zone_max, weather_flow_ceiling(actual_outside_temp)));
+                    this->room_cap_[i] = next_room_cap(this->room_cap_[i], room_temp, room_target_temp, cap_floor, cap_ceiling);
                 }
                 else
                 {
