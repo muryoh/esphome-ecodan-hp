@@ -310,6 +310,7 @@ namespace esphome
                 }
 
                 this->aa_heat_target_[i] = out_flow_heat;
+                this->aa_heat_ceiling_[i] = cap_ceiling;
                 out_flow_heat = this->aa_running_heating_flow_(
                     status, (i == 0) ? OptimizerZone::ZONE_1 : OptimizerZone::ZONE_2, out_flow_heat);
             } else if (is_cooling_mode && is_cooling_active) {

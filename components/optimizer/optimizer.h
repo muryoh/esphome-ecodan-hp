@@ -29,6 +29,8 @@ namespace esphome
       // Last heating flow computed by the auto-adaptive loop, per zone. The live
       // guard keeps the running setpoint near the feed while moving towards it.
       float aa_heat_target_[2] = {NAN, NAN};
+      // Weather ceiling per zone from the same loop; the live guard never goes above it.
+      float aa_heat_ceiling_[2] = {NAN, NAN};
       // Last live guard command per zone, to skip resends until the FTC echoes it.
       float guard_last_flow_[2] = {NAN, NAN};
       uint32_t guard_last_ms_[2] = {0, 0};

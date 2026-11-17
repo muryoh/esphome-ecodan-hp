@@ -18,13 +18,20 @@ namespace esphome
     constexpr float FLOW_CEILING_ABOVE_FEED = 1.0f;
 
     // Heating setpoint for a running compressor: the target, kept between
-    // feed - FLOW_FLOOR_BELOW_FEED and feed + FLOW_CEILING_ABOVE_FEED.
-    inline float live_heating_flow(float target, float feed)
+    // feed - FLOW_FLOOR_BELOW_FEED and feed + FLOW_CEILING_ABOVE_FEED, and never
+    // above `ceiling` (the weather ceiling). Without that last limit the floor
+    // chases a feed the FTC keeps pushing up after a cold start (66 Hz ramp),
+    // and the setpoint climbs far past the weather curve with the compressor
+    // at 50+ Hz. The FTC does not stop when the feed exceeds the setpoint, so a
+    // setpoint below the feed only makes it slow down.
+    inline float live_heating_flow(float target, float feed, float ceiling = NAN)
     {
       if (std::isnan(feed) || std::isnan(target))
         return target;
       float flow = std::min(target, feed + FLOW_CEILING_ABOVE_FEED);
       flow = std::max(flow, feed - FLOW_FLOOR_BELOW_FEED);
+      if (!std::isnan(ceiling))
+        flow = std::min(flow, ceiling);
       return std::round(flow * 10.0f) / 10.0f;
     }
 
