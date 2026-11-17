@@ -16,14 +16,19 @@ namespace esphome
     // (66 Hz on a start with cold water), so a running compressor is only
     // ever asked for this much above the current feed.
     constexpr float FLOW_CEILING_ABOVE_FEED = 1.0f;
+    // Above the weather ceiling the setpoint may sit this far below the feed.
+    // The FTC kept running with the feed 2.2 °C above the setpoint, but stopped
+    // within 30 s at 8 °C above, so stay inside what has been seen to run.
+    constexpr float FLOW_FLOOR_BELOW_FEED_OVER_CEILING = 2.0f;
 
     // Heating setpoint for a running compressor: the target, kept between
-    // feed - FLOW_FLOOR_BELOW_FEED and feed + FLOW_CEILING_ABOVE_FEED, and never
-    // above `ceiling` (the weather ceiling). Without that last limit the floor
-    // chases a feed the FTC keeps pushing up after a cold start (66 Hz ramp),
-    // and the setpoint climbs far past the weather curve with the compressor
-    // at 50+ Hz. The FTC does not stop when the feed exceeds the setpoint, so a
-    // setpoint below the feed only makes it slow down.
+    // feed - FLOW_FLOOR_BELOW_FEED and feed + FLOW_CEILING_ABOVE_FEED. Above
+    // `ceiling` (the weather ceiling) the floor drops to feed -
+    // FLOW_FLOOR_BELOW_FEED_OVER_CEILING and the setpoint walks down to the
+    // ceiling as the feed falls. Without that the floor chases a feed the FTC
+    // keeps pushing up after a cold start (66 Hz ramp), and the setpoint climbs
+    // far past the weather curve with the compressor at 50+ Hz; a setpoint
+    // dropped straight to the ceiling stops the compressor instead.
     inline float live_heating_flow(float target, float feed, float ceiling = NAN)
     {
       if (std::isnan(feed) || std::isnan(target))
@@ -31,7 +36,7 @@ namespace esphome
       float flow = std::min(target, feed + FLOW_CEILING_ABOVE_FEED);
       flow = std::max(flow, feed - FLOW_FLOOR_BELOW_FEED);
       if (!std::isnan(ceiling))
-        flow = std::min(flow, ceiling);
+        flow = std::min(flow, std::max(ceiling, feed - FLOW_FLOOR_BELOW_FEED_OVER_CEILING));
       return std::round(flow * 10.0f) / 10.0f;
     }
 

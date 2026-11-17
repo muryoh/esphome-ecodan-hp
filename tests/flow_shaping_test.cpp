@@ -17,8 +17,10 @@ int main()
   assert(near(live_heating_flow(25.3f, 25.0f), 25.3f));
   // Target far below the feed is raised to feed - 0.5 (no stop).
   assert(near(live_heating_flow(24.0f, 27.0f), 26.5f));
-  // The floor never lifts the setpoint above the weather ceiling.
-  assert(near(live_heating_flow(29.0f, 35.5f, 29.0f), 29.0f));
+  // Above the weather ceiling the setpoint walks down at feed - 2, then stops at the ceiling.
+  assert(near(live_heating_flow(29.0f, 37.0f, 29.0f), 35.0f));
+  assert(near(live_heating_flow(29.0f, 30.0f, 29.0f), 29.0f));
+  assert(near(live_heating_flow(29.0f, 29.4f, 29.0f), 29.0f));
   assert(near(live_heating_flow(24.0f, 27.0f, 29.0f), 26.5f));
   // Missing feed leaves the target alone.
   assert(near(live_heating_flow(24.0f, NAN), 24.0f));
