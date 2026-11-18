@@ -40,6 +40,18 @@ namespace esphome
       return std::round(flow * 10.0f) / 10.0f;
     }
 
+    // Heating setpoint while the compressor is stopped: at most feed +
+    // FLOW_CEILING_ABOVE_FEED. The FTC picks its start frequency from the gap
+    // between setpoint and zone feed: 3.5-5 °C over a cold loop (~20 °C) gave
+    // 66 Hz on every such start, 0-1 °C gave 28-52 Hz. It restarts with the
+    // setpoint at the feed, so this does not block the restart.
+    inline float idle_heating_flow(float target, float feed)
+    {
+      if (std::isnan(feed) || std::isnan(target))
+        return target;
+      return std::round(std::min(target, feed + FLOW_CEILING_ABOVE_FEED) * 10.0f) / 10.0f;
+    }
+
     // Room-driven cap on the heating flow, moved once per auto-adaptive cycle
     // (5 min): down by ROOM_CAP_STEP while the room is above target +
     // ROOM_CAP_ABOVE_TARGET, down by ROOM_CAP_SEARCH_STEP while it is at or

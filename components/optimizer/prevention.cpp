@@ -149,7 +149,7 @@ namespace esphome
         float Optimizer::aa_running_heating_flow_(const ecodan::Status &status, OptimizerZone zone, float target)
         {
             if (!this->is_compressor_active(status))
-                return target;
+                return idle_heating_flow(target, this->get_bus_feed_temp(zone));
             const int zi = (zone == OptimizerZone::ZONE_2) ? 1 : 0;
             // A shared setpoint follows the higher ceiling, like the target.
             float ceiling = status.has_independent_zone_temps()

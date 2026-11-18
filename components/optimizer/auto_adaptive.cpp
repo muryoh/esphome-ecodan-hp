@@ -276,7 +276,8 @@ namespace esphome
                 // The cap only moves while the compressor runs. A stop resets it, so a
                 // warm night cannot leave it wound down for a cold morning restart; the
                 // next run starts it from the setpoint then in use. While stopped, the
-                // flow is still held under the weather ceiling.
+                // flow is still held under the weather ceiling, and at feed + 1 by
+                // aa_running_heating_flow_ (soft start).
                 // Never below the zone min, even when the weather curve is.
                 float cap_ceiling = std::max(zone_min, std::min(zone_max, weather_flow_ceiling(actual_outside_temp)));
                 if (this->is_compressor_active(status))

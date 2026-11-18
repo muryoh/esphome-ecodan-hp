@@ -24,6 +24,10 @@ int main()
   assert(near(live_heating_flow(24.0f, 27.0f, 29.0f), 26.5f));
   // Missing feed leaves the target alone.
   assert(near(live_heating_flow(24.0f, NAN), 24.0f));
+  // Stopped: setpoint held at feed + 1 over a cold loop, target kept when warmer.
+  assert(near(idle_heating_flow(24.0f, 20.5f), 21.5f));
+  assert(near(idle_heating_flow(24.0f, 27.0f), 24.0f));
+  assert(near(idle_heating_flow(24.0f, NAN), 24.0f));
   // Room cap starts at the max, then follows the room.
   assert(near(next_room_cap(NAN, NAN, 19.0f, 19.0f, 20.0f, 35.0f), 34.9f));
   assert(near(next_room_cap(28.0f, NAN, 19.4f, 19.0f, 20.0f, 35.0f), 27.8f));
