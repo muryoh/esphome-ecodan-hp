@@ -275,7 +275,9 @@ namespace esphome
 
                 // The cap only moves while the compressor runs. A stop resets it, so a
                 // warm night cannot leave it wound down for a cold morning restart; the
-                // next run starts it from the setpoint then in use. While stopped, the
+                // next run starts it from the setpoint then in use. A defrost stop (~2 min)
+                // keeps it: restarting from the defrost-cooled feed cost ~3 °C of flow,
+                // climbed back at ROOM_CAP_RISE_STEP for 2 h, every defrost. While stopped, the
                 // flow is still held under the weather ceiling, and at feed + 1 by
                 // aa_running_heating_flow_ (soft start).
                 // Never below the zone min, even when the weather curve is.
@@ -288,7 +290,9 @@ namespace esphome
                 }
                 else
                 {
-                    this->room_cap_[i] = NAN;
+                    bool defrosting = this->state_.status_defrost != nullptr && this->state_.status_defrost->state;
+                    if (!defrosting)
+                        this->room_cap_[i] = NAN;
                     out_flow_heat = std::min(out_flow_heat, cap_ceiling);
                 }
                 if (!isnan(this->room_cap_[i]) && out_flow_heat > this->room_cap_[i])
