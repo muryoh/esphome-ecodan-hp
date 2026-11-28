@@ -34,6 +34,9 @@ namespace esphome
       // Last live guard command per zone, to skip resends until the FTC echoes it.
       float guard_last_flow_[2] = {NAN, NAN};
       uint32_t guard_last_ms_[2] = {0, 0};
+      // Setpoint held through a defrost and its recovery (see defrost_hold_active).
+      float defrost_hold_[2] = {NAN, NAN};
+      uint32_t defrost_hold_ms_[2] = {0, 0};
       // Room-driven heating flow cap per zone (see next_room_cap).
       float room_cap_[2] = {NAN, NAN};
 

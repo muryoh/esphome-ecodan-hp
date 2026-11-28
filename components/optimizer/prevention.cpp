@@ -148,9 +148,24 @@ namespace esphome
 
         float Optimizer::aa_running_heating_flow_(const ecodan::Status &status, OptimizerZone zone, float target)
         {
-            if (!this->is_compressor_active(status))
-                return idle_heating_flow(target, this->get_bus_feed_temp(zone));
             const int zi = (zone == OptimizerZone::ZONE_2) ? 1 : 0;
+            float feed = this->get_bus_feed_temp(zone);
+            bool defrosting = this->state_.status_defrost != nullptr && this->state_.status_defrost->state;
+            if (defrosting && isnan(this->defrost_hold_[zi]))
+            {
+                this->defrost_hold_[zi] = this->get_flow_setpoint(zone);
+                this->defrost_hold_ms_[zi] = millis();
+                ESP_LOGI(OPTIMIZER_TAG, "Z%d Defrost: holding flow setpoint %.1f°C", zi + 1, this->defrost_hold_[zi]);
+            }
+            if (!isnan(this->defrost_hold_[zi]))
+            {
+                if (defrost_hold_active(this->defrost_hold_[zi], feed, defrosting, millis() - this->defrost_hold_ms_[zi]))
+                    return this->defrost_hold_[zi];
+                ESP_LOGI(OPTIMIZER_TAG, "Z%d Defrost hold released (feed %.1f°C)", zi + 1, feed);
+                this->defrost_hold_[zi] = NAN;
+            }
+            if (!this->is_compressor_active(status))
+                return idle_heating_flow(target, feed);
             // A shared setpoint follows the higher ceiling, like the target.
             float ceiling = status.has_independent_zone_temps()
                 ? this->aa_heat_ceiling_[zi]

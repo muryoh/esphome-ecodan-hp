@@ -28,6 +28,12 @@ int main()
   assert(near(idle_heating_flow(24.0f, 20.5f), 21.5f));
   assert(near(idle_heating_flow(24.0f, 27.0f), 24.0f));
   assert(near(idle_heating_flow(24.0f, NAN), 24.0f));
+  // Defrost hold: kept while defrosting and until the feed is back near the held setpoint.
+  assert(defrost_hold_active(32.5f, 28.0f, true, 0));
+  assert(defrost_hold_active(32.5f, 30.0f, false, 10UL * 60UL * 1000UL));
+  assert(!defrost_hold_active(32.5f, 31.5f, false, 10UL * 60UL * 1000UL));
+  assert(!defrost_hold_active(32.5f, 28.0f, false, DEFROST_HOLD_MAX_MS));
+  assert(!defrost_hold_active(NAN, 28.0f, true, 0));
   // Room cap starts at the max, then follows the room.
   assert(near(next_room_cap(NAN, NAN, 19.0f, 19.0f, 20.0f, 35.0f), 34.9f));
   assert(near(next_room_cap(28.0f, NAN, 19.4f, 19.0f, 20.0f, 35.0f), 27.8f));

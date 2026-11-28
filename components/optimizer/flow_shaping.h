@@ -52,6 +52,21 @@ namespace esphome
       return std::round(std::min(target, feed + FLOW_CEILING_ABOVE_FEED) * 10.0f) / 10.0f;
     }
 
+    // A defrost stops the compressor for ~6 min and cools the zone feed by
+    // 2-4 °C. Following that feed (stopped: feed + 1, running: the live band)
+    // dropped the setpoint by as much, and it took 1 h 40 - 2 h to climb back
+    // after every defrost. Instead the setpoint in use when the defrost
+    // started is held until the feed is back within FLOW_CEILING_ABOVE_FEED of
+    // it, for at most DEFROST_HOLD_MAX_MS.
+    constexpr unsigned long DEFROST_HOLD_MAX_MS = 45UL * 60UL * 1000UL;
+
+    inline bool defrost_hold_active(float hold, float feed, bool defrosting, unsigned long held_ms)
+    {
+      if (std::isnan(hold) || held_ms >= DEFROST_HOLD_MAX_MS)
+        return false;
+      return defrosting || std::isnan(feed) || feed < hold - FLOW_CEILING_ABOVE_FEED;
+    }
+
     // Room-driven cap on the heating flow, moved once per auto-adaptive cycle
     // (5 min): down by ROOM_CAP_STEP while the room is above target +
     // ROOM_CAP_ABOVE_TARGET, down by ROOM_CAP_SEARCH_STEP while it is at or
